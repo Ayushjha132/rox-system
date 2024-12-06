@@ -4,9 +4,12 @@ import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
 import bodyParser from "body-parser";
+import connectDB from "./db/db";
+
 import helloRoute from "./routes/helloRoute";
 import seedRoute from "./routes/seedRoute";
-import connectDB from "./db/db";
+import transactionsRoute from "./routes/transactionsRoute";
+
 // CONFIG
 dotenv.config();
 const app = express();
@@ -25,6 +28,7 @@ connectDB();
 app.use("/", helloRoute)
 // seeding api route
 app.use("/api", seedRoute);
+app.use("/api", transactionsRoute)
 
 /* SERVER */
 const port = Number(process.env.PORT) || 3000;
