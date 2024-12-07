@@ -9,7 +9,7 @@ import connectDB from "./db/db";
 import helloRoute from "./routes/helloRoute";
 import seedRoute from "./routes/seedRoute";
 import transactionsRoute from "./routes/transactionsRoute";
-
+import statisticRoute from "./routes/statisticRoute";
 // CONFIG
 dotenv.config();
 const app = express();
@@ -29,6 +29,7 @@ app.use("/", helloRoute)
 // seeding api route
 app.use("/api", seedRoute);
 app.use("/api", transactionsRoute)
+app.use("/api", statisticRoute)
 
 /* SERVER */
 const port = Number(process.env.PORT) || 3000;
