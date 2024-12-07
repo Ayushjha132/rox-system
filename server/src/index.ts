@@ -10,6 +10,7 @@ import helloRoute from "./routes/helloRoute";
 import seedRoute from "./routes/seedRoute";
 import transactionsRoute from "./routes/transactionsRoute";
 import statisticRoute from "./routes/statisticRoute";
+import barchartRoute from "./routes/barchartRoute";
 // CONFIG
 dotenv.config();
 const app = express();
@@ -30,6 +31,7 @@ app.use("/", helloRoute)
 app.use("/api", seedRoute);
 app.use("/api", transactionsRoute)
 app.use("/api", statisticRoute)
+app.use("/api", barchartRoute)
 
 /* SERVER */
 const port = Number(process.env.PORT) || 3000;
