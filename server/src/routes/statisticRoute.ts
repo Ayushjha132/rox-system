@@ -1,37 +1,31 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import Product from "../models/product";
 import Month from "../utils/month";
 
 const router = express.Router();
 
-router.get("/statistics", async (req: Request, res: Response): Promise<any> => {
+// extracted logic to use into combined api
+export const getStatisticsData = async (month:string) => {
   try {
-    const { month } = req.query;
-
     if (!month || typeof month !== "string") {
-      return res
-        .status(400)
-        .json({ error: "Invalid or missing 'month' query parameter" });
+      throw new Error("Invalid or missing 'month' query parameter");
     }
 
-    // the month no from the enum
     const monthNumber = Month[month as keyof typeof Month];
 
-    // if the month is not a valid month
     if (!monthNumber) {
-      return res.status(400).json({ error: "Invalid month provided in query" });
+      throw new Error("Invalid month provided in query");
     }
-    
-    // Use aggregation to calculate statistics
+
     const statistics = await Product.aggregate([
       {
         $addFields: {
-          month: { $month: "$dateOfSale" }, // Extract month from the dateOfSale
+          month: { $month: "$dateOfSale" },
         },
       },
       {
         $match: {
-          month: monthNumber, // Match extracted month to the provided month
+          month: monthNumber,
         },
       },
       {
@@ -40,17 +34,17 @@ router.get("/statistics", async (req: Request, res: Response): Promise<any> => {
             {
               $group: {
                 _id: null,
-                totalSaleAmount: { $sum: "$price" }, // Total sales
-                totalSoldItems: { $sum: 1 }, // Count all transactions
+                totalSaleAmount: { $sum: "$price" },
+                totalSoldItems: { $sum: 1 },
               },
             },
           ],
           notSoldCount: [
             {
-              $match: { sold: false }, // Filter for not sold items
+              $match: { sold: false },
             },
             {
-              $count: "count", // Count not sold items
+              $count: "count",
             },
           ],
         },
@@ -64,28 +58,38 @@ router.get("/statistics", async (req: Request, res: Response): Promise<any> => {
       },
     ]);
 
-    // If no matching data, return zeros
     if (!statistics || statistics.length === 0) {
-      res.status(200).json({
+      return {
         totalSaleAmount: 0,
         totalSoldItems: 0,
         totalNotSoldItems: 0,
-      });
-      return;
+      };
     }
 
-    const { totalSaleAmount = 0, totalSoldItems = 0, totalNotSoldItems = 0 } =
-      statistics[0];
+    const { totalSaleAmount = 0, totalSoldItems = 0, totalNotSoldItems = 0 } = statistics[0];
 
-    res.status(200).json({
+    return {
       totalSaleAmount,
       totalSoldItems,
       totalNotSoldItems,
-    });
+    };
   } catch (error) {
-    console.error(error);
+    console.error("Error during statistics computation:", error);
+    throw new Error("Failed to fetch statistics");
+  }
+};
+
+router.get("/statistics", async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const month = req.query.month as string;
+    const statisticsResponse = await getStatisticsData(month);
+    res.status(200).json(statisticsResponse);
+  } catch (error) {
+    console.error("Error fetching statistics data", error);
     res.status(500).json({ error: "Failed to fetch statistics" });
   }
 });
 
 export default router;
+
+

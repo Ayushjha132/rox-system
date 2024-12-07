@@ -1,17 +1,14 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import Product from "../models/product";
 import Month from "../utils/month";
 
 const router = express.Router();
 
-router.get("/piechart", async (req, res) => {
+export const getPieChartData = async (month: string) => {
   try {
-    const { month } = req.query;
-
     // Validate and map the month string to number using the enum
-    if (!month || !(month as string in Month)) {
-      res.status(400).json({ error: "Invalid or missing month parameter" });
-      return;
+    if (!month || !((month as string) in Month)) {
+      throw new Error("Invalid or missing month parameter");
     }
 
     const monthNumber = Month[month as keyof typeof Month];
@@ -41,13 +38,28 @@ router.get("/piechart", async (req, res) => {
       count: categoryCounts[category],
     }));
 
-    res.status(200).json({
-      data: response,
-    });
+    return response; // Return the response data
   } catch (error) {
     console.error("Error fetching pie chart data:", error);
-    res.status(500).json({ error: "Failed to fetch pie chart data" });
+    throw new Error("Failed to fetch pie chart data");
   }
-});
+};
+
+router.get(
+  "/piechart",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const month = req.query.month as string;
+      const response = await getPieChartData(month); // Call the refactored data function
+      res.status(200).json({
+        data: response,
+      });
+    } catch (error) {
+      console.error("Error during pie chart route", error);
+      res.status(500).json({ error: "Failed to fetch pie chart data" });
+    }
+  }
+);
+
 
 export default router;

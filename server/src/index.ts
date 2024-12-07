@@ -12,6 +12,7 @@ import transactionsRoute from "./routes/transactionsRoute";
 import statisticRoute from "./routes/statisticRoute";
 import barchartRoute from "./routes/barchartRoute";
 import piechartRoute from "./routes/piechartRoute";
+import combinedRoute from "./routes/combinedRoute";
 // CONFIG
 dotenv.config();
 const app = express();
@@ -34,6 +35,7 @@ app.use("/api", transactionsRoute)
 app.use("/api", statisticRoute)
 app.use("/api", barchartRoute)
 app.use("/api", piechartRoute)
+app.use("/api", combinedRoute)
 
 /* SERVER */
 const port = Number(process.env.PORT) || 3000;

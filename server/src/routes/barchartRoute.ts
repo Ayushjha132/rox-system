@@ -1,17 +1,14 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import Product from "../models/product";
 import Month from "../utils/month";
 
 const router = express.Router();
 
-router.get("/barchart", async (req, res) => {
+export const getBarChartData = async (month: string) => {
   try {
-    const { month } = req.query;
-
     // Validate and map the month string to the corresponding enum value
-    if (!month || !(month as string in Month)) {
-      res.status(400).json({ error: "Invalid or missing month parameter" });
-      return;
+    if (!month || !((month as string) in Month)) {
+      throw new Error("Invalid or missing month parameter");
     }
     const monthNumber = Month[month as keyof typeof Month]; // Map month name to number
 
@@ -55,14 +52,28 @@ router.get("/barchart", async (req, res) => {
       count: range.count,
     }));
 
-    res.status(200).json({
-    //   message: "Bar chart data fetched successfully",
-      data: response,
-    });
+    return response;
   } catch (error) {
     console.error("Error fetching bar chart data:", error);
-    res.status(500).json({ error: "Failed to fetch bar chart data" });
+    throw new Error("Failed to fetch bar chart data");
   }
-});
+};
+
+router.get(
+  "/barchart",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const month = req.query.month as string;
+
+      const barChartResponse = await getBarChartData(month);
+      res.status(200).json({
+        data: barChartResponse,
+      });
+    } catch (error) {
+      console.error("Error fetching bar chart data", error);
+      res.status(500).json({ error: "Failed to fetch bar chart data" });
+    }
+  }
+);
 
 export default router;
