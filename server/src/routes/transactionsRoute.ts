@@ -1,12 +1,19 @@
 import express from "express";
 import Product from "../models/product";
+import Month from "../utils/month";
 
 const router = express.Router();
 
 // GET api/transactions route
-router.get("/transactions", async (req, res) => {
+router.get("/transactions", async (req, res):Promise<any> => {
   try {
-    const { search = "", page = "1", perPage = "10" } = req.query;
+    const { search = "", page = "1", perPage = "10", month } = req.query;
+    // month param
+    if (!month || typeof month !== "string" || !Month[month as keyof typeof Month]) {
+      return res.status(400).json({ error: "Invalid or missing 'month' query parameter" });
+    }
+    const monthNumber = Month[month as keyof typeof Month];
+    
     // setup pagination value
     const currentPage = parseInt(page as string, 10) || 1;
     const limit = parseInt(perPage as string, 10) || 10;
@@ -35,20 +42,25 @@ router.get("/transactions", async (req, res) => {
     const searchFilter =
       searchConditions.length > 0 ? { $or: searchConditions } : {};
 
-    // Fetch transactions with pagination
-    const transactions = await Product.find(searchFilter)
-      .skip(skip)
-      .limit(limit);
+    // Fetch all products from DB and apply filters
+    const products = await Product.find(searchFilter).lean();
 
-    // total matching
-    const totalCount = await Product.countDocuments(searchFilter);
+    // Filter by month 
+    const filteredProducts = products.filter((product) => {
+      const productMonth = new Date(product.dateOfSale).getMonth() + 1;
+      return productMonth === monthNumber;
+    });
 
-    // return the result
+    // Paginate the filtered results
+    const totalRecords = filteredProducts.length;
+    const paginatedProducts = filteredProducts.slice(skip, skip + limit);
+
+    // Return the result
     res.status(200).json({
       currentPage,
       perPage: limit,
-      totalRecords: totalCount,
-      transactions,
+      totalRecords,
+      transactions: paginatedProducts,
     });
   } catch (error) {
     console.error("Error fetching transactions:", error);
