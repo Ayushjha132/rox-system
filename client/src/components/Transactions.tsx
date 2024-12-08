@@ -57,7 +57,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 <td className="border border-gray-300 p-2">{transaction.price}</td>
                 <td className="border border-gray-300 p-2">{transaction.sold ? "Yes" : "No"}</td>
                 <td className="border border-gray-300 p-2">
-                  {new Date(transaction.dateOfSale).toLocaleDateString()}
+                  {new Date(transaction.date).toLocaleDateString()}
                 </td>
                 <td className="border border-gray-300 p-2">
                   <img
